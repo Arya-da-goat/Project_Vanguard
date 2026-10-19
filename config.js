@@ -1,8 +1,0 @@
-export const WEAPONS = [
-  { id:"vx4", name:"VX-4 RIFLE", category:"ASSAULT PLATFORM", short:"AR", damage:26, rate:115, mag:30, reserve:120, reload:1.65, spread:0.006, range:100, automatic:true, pellets:1, color:0xc5d5d7, description:"Balanced automatic platform with reliable control and effective mid-range performance.", stats:[72,75,68] },
-  { id:"kx9", name:"KX-9 SMG", category:"CLOSE-QUARTERS PLATFORM", short:"SMG", damage:17, rate:75, mag:36, reserve:144, reload:1.4, spread:0.012, range:55, automatic:true, pellets:1, color:0x9ab8bd, description:"Compact high-cyclic weapon built for aggressive movement and close engagements.", stats:[49,92,57] },
-  { id:"m77", name:"M-77 MARKSMAN", category:"PRECISION PLATFORM", short:"MR", damage:78, rate:620, mag:8, reserve:40, reload:2.0, spread:0.001, range:160, automatic:false, pellets:1, color:0xb6c7cb, description:"Semi-automatic precision rifle. Deliberate shots reward calm tracking and accurate aim.", stats:[95,31,83] },
-  { id:"breach", name:"BREACH-12", category:"BREACH PLATFORM", short:"SG", damage:10, rate:720, mag:8, reserve:40, reload:1.85, spread:0.05, range:25, automatic:false, pellets:9, color:0xcaa37a, description:"Close-range scatter weapon with a wide pellet pattern and devastating proximity pressure.", stats:[88,25,42] },
-  { id:"p9", name:"P9 SIDEARM", category:"SECONDARY PLATFORM", short:"P", damage:23, rate:260, mag:15, reserve:75, reload:1.15, spread:0.008, range:65, automatic:false, pellets:1, color:0xaec4c8, description:"Fast-drawing sidearm with balanced handling and dependable backup performance.", stats:[58,53,88] }
-];
-export const SETTINGS_DEFAULTS = { sensitivity:1, fov:78, volume:.6, quality:"medium", showFps:true, camShake:true };
