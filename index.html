@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#090d12">
+<title>PROJECT VANGUARD — Arena Protocol</title>
+<link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<div id="boot" class="screen">
+  <div class="nav"><div class="logo-mark">V</div><div><div class="overline">VANGUARD COMBAT SYSTEMS</div><div class="brand-title">PROJECT <b>VANGUARD</b></div></div><div class="build">ARENA PROTOCOL <span>•</span> BUILD 1.2</div></div>
+  <div class="hero">
+    <div class="hero-copy">
+      <div class="eyebrow"><i></i> COMBAT SIMULATION / ONLINE-STYLE BOT MATCH</div>
+      <h1>ONLY ONE<br><em>WALKS OUT.</em></h1>
+      <p>Enter a hostile training arena. Every operator is an enemy. No objectives. No extraction. Survive the free-for-all.</p>
+      <div class="menu-actions">
+        <button id="startBtn" class="btn primary"><span class="play-icon">▶</span> ENTER DEATHMATCH <b>↗</b></button>
+        <button id="showcaseBtn" class="btn secondary">WEAPON ARMORY <span>↗</span></button>
+      </div>
+      <div class="menu-stats"><div><small>MODE</small><strong>LAST STANDING</strong></div><div><small>COMBATANTS</small><strong>YOU + 7 BOTS</strong></div><div><small>ARENA</small><strong>BLACKSITE 09</strong></div></div>
+    </div>
+    <div class="hero-art" aria-hidden="true"><div class="ring ring-one"></div><div class="ring ring-two"></div><div class="cross-lines"></div><div class="hero-weapon"><div class="weapon-top"></div><div class="weapon-body"></div><div class="weapon-grip"></div><div class="weapon-barrel"></div><div class="weapon-stock"></div></div><div class="art-label label-a">VX-4 / PLATFORM 04</div><div class="art-label label-b">FIELD TESTED // 2094</div><div class="scanline"></div></div>
+  </div>
+  <div class="menu-bottom"><span>WASD MOVE&nbsp;&nbsp; / &nbsp;&nbsp;MOUSE AIM&nbsp;&nbsp; / &nbsp;&nbsp;LMB FIRE</span><span>TRAINING SIMULATION <b>● READY</b></span></div>
+</div>
+
+<div id="loading" class="screen hidden"><div class="loader"></div><p>BUILDING BLACKSITE ARENA…</p></div>
+<div id="hud" class="hidden">
+  <div class="hud-top"><div class="match-chip"><span class="live-dot"></span> FREE-FOR-ALL <i>/</i> BLACKSITE 09</div><div class="match-center"><span>ROUND <b id="roundNo">01</b></span><span class="timer" id="timer">05:00</span></div><div class="match-right"><span id="fps">-- FPS</span><button id="scoreBtn" class="tiny-btn">SCOREBOARD <kbd>TAB</kbd></button></div></div>
+  <div class="alive-panel"><small>OPERATORS ALIVE</small><strong id="aliveCount">8</strong><div class="alive-pips" id="alivePips"></div></div>
+  <div id="crosshair"><i class="top"></i><i class="right"></i><i class="bottom"></i><i class="left"></i><b></b></div>
+  <div id="hitmarker">×</div><div id="damageVignette"></div><div id="damageDirection"></div>
+  <div id="killFeed" class="kill-feed"></div>
+  <div class="hud-bottom-left"><div class="health-row"><div class="health-icon">+</div><div class="health-info"><small>VITALS</small><strong id="healthText">100</strong></div><div class="health-track"><i id="healthBar"></i></div></div><div class="armor-row"><span>ARMOR</span><div class="armor-track"><i id="armorBar"></i></div><b id="armorText">50</b></div><div class="player-stats"><span>ELIMINATIONS <b id="kills">0</b></span><span>DEATHS <b id="deaths">0</b></span></div></div>
+  <div class="hud-bottom-right"><div class="weapon-readout"><div><small id="weaponCategory">ASSAULT PLATFORM</small><strong id="weaponName">VX-4 RIFLE</strong></div><div class="weapon-key">[ <b id="weaponKey">1</b> ]</div></div><div class="ammo-row"><strong id="ammoNow">30</strong><span>/ <b id="ammoReserve">120</b></span><div class="ammo-bar" id="ammoPips"></div></div><div class="ammo-label"><span>MAGAZINE</span><span id="reloadLabel"></span></div><div class="weapon-switch"><span>1 <b>AR</b></span><span>2 <b>SMG</b></span><span>3 <b>MR</b></span><span>4 <b>SG</b></span><span>5 <b>PISTOL</b></span></div></div>
+  <div id="notice" class="notice"></div>
+  <div id="scoreboard" class="scoreboard hidden"><div class="score-head"><span>OPERATOR</span><span>ELIMS</span><span>STATUS</span></div><div id="scoreRows"></div><div class="score-foot">PRESS TAB TO CLOSE</div></div>
+  <div id="mobileControls" class="hidden"><div id="stickBase"><div id="stickKnob"></div></div><div id="lookZone"></div><div class="mobile-actions"><button id="mobileJump">JUMP</button><button id="mobileReload">RELOAD</button><button id="mobileSwap">SWAP</button><button id="mobileFire" class="fire">FIRE</button></div></div>
+</div>
+
+<div id="pause" class="screen hidden"><div class="modal"><div class="eyebrow">VANGUARD / SYSTEM MENU</div><h2>COMBAT <em>PAUSED</em></h2><p>Match simulation suspended.</p><button id="resumeBtn" class="btn primary full">RESUME MATCH</button><button id="settingsBtn" class="btn secondary full">SETTINGS</button><div id="settingsPanel" class="settings hidden">
+<label>LOOK SENSITIVITY <b id="sensVal">1.0×</b></label><input id="sensitivity" type="range" min=".5" max="3.5" step=".1" value="1">
+<label>FIELD OF VIEW <b id="fovVal">78°</b></label><input id="fov" type="range" min="65" max="100" step="1" value="78">
+<label>MASTER VOLUME <b id="volVal">60%</b></label><input id="volume" type="range" min="0" max="1" step=".05" value=".6">
+<label>GRAPHICS QUALITY</label><select id="quality"><option value="low">LOW / PERFORMANCE</option><option value="medium" selected>MEDIUM / BALANCED</option><option value="high">HIGH / VISUAL</option></select>
+<label class="checkrow"><input id="showFps" type="checkbox" checked> SHOW FPS COUNTER</label><label class="checkrow"><input id="camShake" type="checkbox" checked> WEAPON KICK EFFECT</label>
+</div><button id="restartBtn" class="btn secondary full">RESTART ROUND</button><button id="menuBtn" class="btn secondary full">RETURN TO MENU</button><div class="modal-foot">ESC TO RESUME <span>•</span> SETTINGS APPLY IMMEDIATELY</div></div></div>
+
+<div id="endScreen" class="screen hidden"><div class="modal result-modal"><div class="result-mark" id="resultMark">V</div><div class="eyebrow" id="endEyebrow">MATCH REPORT</div><h2 id="endTitle">VICTORY <em>CONFIRMED</em></h2><p id="endDesc">You are the last operator standing.</p><div class="report"><div><small>ELIMINATIONS</small><strong id="endKills">0</strong></div><div><small>TIME</small><strong id="endTime">00:00</strong></div><div><small>PLACEMENT</small><strong id="endPlace">#1</strong></div></div><button id="endRestart" class="btn primary full">PLAY AGAIN</button><button id="endMenu" class="btn secondary full">RETURN TO MENU</button></div></div>
+
+<div id="armory" class="screen hidden"><div class="armory-top"><button id="armoryBack" class="tiny-btn">← BACK</button><div class="overline">VANGUARD ARMORY / FIELD CONFIGURATION</div><span>01 — 05</span></div><div class="armory-layout"><div class="armory-copy"><div class="eyebrow">WEAPON SYSTEMS</div><h2 id="armoryName">VX-4 <em>ASSAULT</em></h2><p id="armoryDesc">Balanced automatic platform with reliable control and effective mid-range performance.</p><div class="weapon-stats"><div><small>DAMAGE</small><div class="stat-line"><i id="statDamage"></i></div></div><div><small>FIRE RATE</small><div class="stat-line"><i id="statRate"></i></div></div><div><small>CONTROL</small><div class="stat-line"><i id="statControl"></i></div></div></div><div class="armory-select"><button data-weapon="0" class="selected">01 <b>VX-4</b></button><button data-weapon="1">02 <b>KX-9</b></button><button data-weapon="2">03 <b>M-77</b></button><button data-weapon="3">04 <b>BREACH</b></button><button data-weapon="4">05 <b>P9</b></button></div><div class="armory-tip">DRAG TO ROTATE MODEL <span>•</span> SELECT A PLATFORM</div></div><div class="armory-view"><canvas id="armoryCanvas"></canvas><div class="armory-grid"></div><div class="armory-view-label">3D INSPECTION / PROTOTYPE SERIES</div></div></div></div>
+
+<div id="toast" class="toast hidden"></div>
+<script type="module" src="./game.js"></script>
+</body>
+</html>
