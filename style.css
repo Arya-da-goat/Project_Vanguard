@@ -26,3 +26,5 @@
 .minimap-panel{position:fixed;top:60px;left:20px;z-index:10;background:rgba(8,13,18,.75);border:1px solid rgba(135,153,157,.25);border-radius:4px;padding:4px;backdrop-filter:blur(4px)}.minimap-panel canvas{display:block;border-radius:2px}
 /* Damage numbers */
 .damage-number{position:fixed;font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:700;color:#91e8e5;text-shadow:0 0 8px rgba(145,232,229,.6);pointer-events:none;z-index:100;animation:dmgFloat .8s ease-out forwards}.damage-number.crit{color:#ff6b6b;font-size:32px}@keyframes dmgFloat{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-60px) scale(1.3)}}
+/* Hide cursor on game canvas */
+canvas{cursor:none}
