@@ -83,7 +83,8 @@ function buildGame(){
  scene=new THREE.Scene();camera=new THREE.PerspectiveCamera(fov,innerWidth/innerHeight,.06,240);camera.rotation.order="YXZ";scene.add(camera);
  renderer=new THREE.WebGLRenderer({antialias:quality!=="low",powerPreference:"high-performance"});renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,quality==="high"?1.5:quality==="medium"?1.1:.8));renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.08;renderer.shadowMap.enabled=quality!=="low";renderer.shadowMap.type=THREE.PCFSoftShadowMap;document.body.appendChild(renderer.domElement);
  renderer.domElement.addEventListener("click",()=>{if(running&&!paused&&!ended&&!mobile)renderer.domElement.requestPointerLock?.();});
- arena=buildArena(scene);colliders=arena.colliders;\n minimapCtx=minimap.getContext('2d');
+ arena=buildArena(scene);colliders=arena.colliders;
+ minimapCtx=$('minimap').getContext('2d');
  // buildArena adds lights after floor and architecture
  weaponModels.length=0;buildPlayerWeapon();placeBots();spawnPowerups();
  playerPos.set(0,1.65,0);yaw=0;pitch=0;velY=0;grounded=true;
