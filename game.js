@@ -81,6 +81,7 @@ function buildGame(){
  if(scene){scene.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){if(Array.isArray(o.material))o.material.forEach(m=>m.dispose());else o.material.dispose();}});}
  scene=new THREE.Scene();camera=new THREE.PerspectiveCamera(fov,innerWidth/innerHeight,.06,240);camera.rotation.order="YXZ";scene.add(camera);
  renderer=new THREE.WebGLRenderer({antialias:quality!=="low",powerPreference:"high-performance"});renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,quality==="high"?1.5:quality==="medium"?1.1:.8));renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.08;renderer.shadowMap.enabled=quality!=="low";renderer.shadowMap.type=THREE.PCFSoftShadowMap;document.body.appendChild(renderer.domElement);
+ renderer.domElement.addEventListener("click",()=>{if(running&&!paused&&!ended&&!mobile)renderer.domElement.requestPointerLock?.();});
  arena=buildArena(scene);colliders=arena.colliders;
  // buildArena adds lights after floor and architecture
  weaponModels.length=0;buildPlayerWeapon();placeBots();
@@ -215,7 +216,6 @@ function bind(){
  document.addEventListener("mousedown",e=>{if(!running||paused||ended)return;if(e.button===0){mouseHeld=true;if(!WEAPONS[weaponIndex].automatic)fire();}if(e.button===2)aiming=true;});
  document.addEventListener("mouseup",e=>{if(e.button===0)mouseHeld=false;if(e.button===2)aiming=false;});
  document.addEventListener("contextmenu",e=>e.preventDefault());
-renderer.domElement.addEventListener("click",()=>{if(running&&!paused&&!ended&&!mobile)renderer.domElement.requestPointerLock?.();});
  document.addEventListener("pointerlockchange",()=>{lastMouseX=null;lastMouseY=null;if(running&&!paused&&!ended&&document.pointerLockElement!==renderer?.domElement&&!mobile){/* cursor unlocked - mouse look still works via position tracking */}});
  $("scoreBtn").addEventListener("click",()=>{if(running){$("scoreboard").classList.toggle("hidden");setScoreboard(getRoster());}});
  bindMobile();
