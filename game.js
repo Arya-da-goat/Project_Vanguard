@@ -1,7 +1,8 @@
 import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js";
 import {WEAPONS,SETTINGS_DEFAULTS} from "./config.js";
 import {buildArena} from "./arena.js";
-import {makeWeapon} from "./weapon-models.js";
+import {makeWeapon, WEAPON_MODEL_FILES} from "./weapon-models.js";
+import { preloadModels, getModel, isModelReady } from "./model-loader.js";
 import {sound,setVolume} from "./audio.js";
 import {notify,showToast,updateHUD,addFeed,showHit,setScoreboard,showResult,formatTime} from "./ui.js";
 const $=id=>document.getElementById(id);
@@ -14,6 +15,29 @@ const PLAYER_NAME="YOU";
 const BOT_NAMES=["WRAITH","MANTIS","ROOK","NOVA","FALCON","GHOST","ONYX"];
 const botDifficulties={easy:{accuracy:.34,react:1.0,speed:3.0,damage:.7},normal:{accuracy:.52,react:.65,speed:3.5,damage:1},hard:{accuracy:.68,react:.38,speed:4.0,damage:1.15}};
 let difficulty="normal";
+const CHAR_LETTERS="abcdefg".split("");
+const MODELS_MANIFEST = Object.assign({}, WEAPON_MODEL_FILES, Object.fromEntries(
+  CHAR_LETTERS.map((c,i)=>[`character_${i}`, `models/characters/character-${c}.glb`])
+), {
+  prop_barrel: "models/props/barrel.glb",
+  prop_box: "models/props/box.glb",
+  prop_boxlarge: "models/props/box-large.glb",
+  prop_chest: "models/props/chest.glb",
+  prop_rocka: "models/props/rock-a.glb",
+  prop_rockb: "models/props/rock-b.glb",
+  prop_rockc: "models/props/rock-c.glb",
+  prop_tree: "models/props/tree.glb",
+  prop_treetall: "models/props/tree-tall.glb",
+});
+let modelsPreloaded = false;
+let modelsPreloadPromise = null;
+function ensureModelsPreloaded(){
+  if (modelsPreloadPromise) return modelsPreloadPromise;
+  modelsPreloadPromise = preloadModels(MODELS_MANIFEST).then(()=>{ modelsPreloaded=true; });
+  return modelsPreloadPromise;
+}
+// Kick off preload early so armory/menu can use models
+ensureModelsPreloaded();
 const settings={...SETTINGS_DEFAULTS};
 function mat(color,rough=.6,metal=.2){return new THREE.MeshStandardMaterial({color,roughness:rough,metalness:metal});}
 function makeBox(parent,x,y,z,sx,sy,sz,material){const m=new THREE.Mesh(new THREE.BoxGeometry(sx,sy,sz),material);m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m;}
@@ -53,6 +77,14 @@ function makeSoldier(name,index,isPlayer=false){
  }
  // visibly equipped rifle with a muzzle reference used by enemy shots
  const gun=makeWeapon(index%5,false);gun.scale.multiplyScalar(.82);gun.position.set(.02,-.16,.24);gun.rotation.x=-.06;arms[1].elbow.add(gun);
+ // Attach a real 3D character model for a visual upgrade (procedural rig kept for animation, meshes hidden)
+ const charModel=getModel("character_"+(index%7));
+ if(charModel){
+   torso.traverse(o=>{ if(o.isMesh) o.visible=false; });
+   charModel.scale.setScalar(0.65);
+   charModel.position.set(0,-1.05,0);
+   torso.add(charModel);
+ }
  // bring support hand near fore-end with articulated arm position
  arms[0].pivot.rotation.x=-.55;arms[0].pivot.rotation.z=.2;
  arms[1].pivot.rotation.x=-.6;arms[1].pivot.rotation.z=-.12;
@@ -94,7 +126,7 @@ document.addEventListener("click",()=>{if(running&&!paused&&!ended&&!mobile&&!do
 }
 function updateHud(){const w=WEAPONS[weaponIndex];updateHUD({health,armor,kills,deaths,alive:1+enemies.filter(e=>e.alive).length,total:8,time:Math.max(0,matchDuration-elapsed),weapon:weaponIndex,ammo:ammo[weaponIndex]||0,reserve:reserve[weaponIndex]||0,reloading});}
 function getRoster(){return [{name:PLAYER_NAME,kills,alive:health>0,player:true},...enemies.map(e=>({name:e.name,kills:e.kills,alive:e.alive,player:false}))].sort((a,b)=>b.kills-a.kills);}
-function startMatch(){settings.sensitivity=+ $("sensitivity").value;settings.fov=+$("fov").value;settings.volume=+$("volume").value;setVolume(settings.volume);difficulty="normal";lastMouseX=null;lastMouseY=null;$("boot").classList.add("hidden");$("armory").classList.add("hidden");$("loading").classList.remove("hidden");setTimeout(()=>{$("loading").classList.add("hidden");$("hud").classList.remove("hidden");buildGame();if(mobile)$("mobileControls").classList.remove("hidden");else {try{document.body.requestPointerLock?.();}catch(e){}}sound("ui");notify("FREE-FOR-ALL — LAST OPERATOR STANDING");},60);}
+function startMatch(){settings.sensitivity=+ $("sensitivity").value;settings.fov=+$("fov").value;settings.volume=+$("volume").value;setVolume(settings.volume);difficulty="normal";lastMouseX=null;lastMouseY=null;$("boot").classList.add("hidden");$("armory").classList.add("hidden");$("loading").classList.remove("hidden");ensureModelsPreloaded().then(()=>setTimeout(()=>{$("loading").classList.add("hidden");$("hud").classList.remove("hidden");buildGame();if(mobile)$("mobileControls").classList.remove("hidden");else {try{document.body.requestPointerLock?.();}catch(e){}}sound("ui");notify("FREE-FOR-ALL - LAST OPERATOR STANDING");},60));}
 function movePlayer(dt){
  const forward=new THREE.Vector3(-Math.sin(yaw),0,-Math.cos(yaw)),right=new THREE.Vector3(Math.cos(yaw),0,-Math.sin(yaw));
  let ix=(keys.KeyD?1:0)-(keys.KeyA?1:0)+moveStick.x,iz=(keys.KeyW?1:0)-(keys.KeyS?1:0)-moveStick.y;

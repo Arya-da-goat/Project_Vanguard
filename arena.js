@@ -1,4 +1,5 @@
 import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js";
+import { getModel } from "./model-loader.js";
 const V=(x,y,z)=>new THREE.Vector3(x,y,z);
 function mat(color,rough=.8,metal=0){return new THREE.MeshStandardMaterial({color,roughness:rough,metalness:metal});}
 function box(scene,colliders,x,y,z,sx,sy,sz,material,solid=true){const m=new THREE.Mesh(new THREE.BoxGeometry(sx,sy,sz),material);m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;scene.add(m);if(solid)colliders.push(new THREE.Box3().setFromObject(m));return m;}
@@ -42,6 +43,37 @@ export function buildArena(scene){
  const sun=new THREE.DirectionalLight(0xffe0bd,2.1);sun.position.set(-25,40,18);sun.castShadow=true;sun.shadow.mapSize.set(qualitySize(),qualitySize());sun.shadow.camera.left=-58;sun.shadow.camera.right=58;sun.shadow.camera.top=58;sun.shadow.camera.bottom=-58;scene.add(sun);
  const fill=new THREE.DirectionalLight(0x7ec4d0,.85);fill.position.set(28,18,-30);scene.add(fill);
  for(const [x,z] of [[-25,-25],[25,-25],[-25,25],[25,25],[0,0]]){const l=new THREE.PointLight(0x65cbd0,1.6,17,2);l.position.set(x,4,z);scene.add(l);}
- return {colliders, spawnPoints:[V(-44,0,-44),V(44,0,-44),V(-44,0,44),V(44,0,44),V(-44,0,0),V(44,0,0),V(0,0,-44),V(0,0,44)]};
+ // Real 3D props from Kenney packs for a visual upgrade
+  const propPositions = [
+    {key:"prop_barrel", x:12, z:8, s:1.2, solid:true},
+    {key:"prop_barrel", x:-14, z:-6, s:1.2, solid:true},
+    {key:"prop_barrel", x:26, z:22, s:1.2, solid:true},
+    {key:"prop_box", x:20, z:-18, s:1.0, solid:true},
+    {key:"prop_boxlarge", x:-22, z:16, s:1.0, solid:true},
+    {key:"prop_chest", x:0, z:30, s:1.1, solid:true},
+    {key:"prop_rocka", x:35, z:20, s:1.6, solid:true},
+    {key:"prop_rockb", x:-30, z:-25, s:1.6, solid:true},
+    {key:"prop_rockc", x:28, z:-35, s:1.6, solid:true},
+    {key:"prop_rocka", x:-18, z:38, s:1.4, solid:true},
+    {key:"prop_tree", x:-40, z:10, s:1.4, solid:false},
+    {key:"prop_treetall", x:42, z:-8, s:1.4, solid:false},
+    {key:"prop_tree", x:38, z:38, s:1.4, solid:false},
+    {key:"prop_treetall", x:-38, z:-38, s:1.4, solid:false},
+    {key:"prop_tree", x:6, z:-40, s:1.3, solid:false},
+    {key:"prop_treetall", x:-6, z:40, s:1.3, solid:false},
+  ];
+  for (const pp of propPositions) {
+    const m = getModel(pp.key);
+    if (!m) continue;
+    m.position.set(pp.x, 0, pp.z);
+    m.scale.setScalar(pp.s);
+    m.rotation.y = Math.random()*Math.PI*2;
+    m.traverse(o=>{ if(o.isMesh){ o.castShadow=true; o.receiveShadow=true; }});
+    scene.add(m);
+    if (pp.solid) colliders.push(new THREE.Box3().setFromObject(m));
+  }
+  scene.background = new THREE.Color(0x6b8fa3);
+  scene.fog = new THREE.FogExp2(0x6b8fa3, .0085);
+  return {colliders, spawnPoints:[V(-44,0,-44),V(44,0,-44),V(-44,0,44),V(44,0,44),V(-44,0,0),V(44,0,0),V(0,0,-44),V(0,0,44)]};
 }
 function qualitySize(){return 1024;}
