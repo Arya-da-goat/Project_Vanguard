@@ -10,10 +10,9 @@ export function loadModel(url) {
   if (pending.has(url)) return pending.get(url);
   const p = new Promise((resolve, reject) => {
     loader.load(url, (gltf) => {
-      const scene = gltf.scene || (gltf.scenes && gltf.scenes[0]);
-      cache.set(url, scene);
+      cache.set(url, gltf);
       pending.delete(url);
-      resolve(scene);
+      resolve(gltf);
     }, undefined, (err) => {
       pending.delete(url);
       reject(err);
@@ -37,13 +36,20 @@ export async function preloadModels(manifest) {
 }
 
 export function getModel(key) {
-  const s = cache.get(key);
-  if (!s || s instanceof Promise) return null;
+  const g = cache.get(key);
+  if (!g || g instanceof Promise) return null;
+  const scene = g.scene || (g.scenes && g.scenes[0]) || g;
   try {
-    return s.clone(true);
+    return scene.clone(true);
   } catch (e) {
-    return s.clone();
+    return scene.clone();
   }
+}
+
+export function getAnimations(key) {
+  const g = cache.get(key);
+  if (!g || g instanceof Promise) return [];
+  return g.animations || [];
 }
 
 export function isModelReady(key) {

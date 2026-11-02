@@ -2,7 +2,7 @@ import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.m
 import {WEAPONS,SETTINGS_DEFAULTS} from "./config.js";
 import {buildArena} from "./arena.js";
 import {makeWeapon, WEAPON_MODEL_FILES} from "./weapon-models.js";
-import { preloadModels, getModel, isModelReady } from "./model-loader.js";
+import { preloadModels, getModel, getAnimations, isModelReady } from "./model-loader.js";
 import {sound,setVolume} from "./audio.js";
 import {notify,showToast,updateHUD,addFeed,showHit,setScoreboard,showResult,formatTime} from "./ui.js";
 const $=id=>document.getElementById(id);
@@ -16,9 +16,8 @@ const BOT_NAMES=["WRAITH","MANTIS","ROOK","NOVA","FALCON","GHOST","ONYX"];
 const botDifficulties={easy:{accuracy:.34,react:1.0,speed:3.0,damage:.7},normal:{accuracy:.52,react:.65,speed:3.5,damage:1},hard:{accuracy:.68,react:.38,speed:4.0,damage:1.15}};
 let difficulty="normal";
 const CHAR_LETTERS="abcdefg".split("");
-const MODELS_MANIFEST = Object.assign({}, WEAPON_MODEL_FILES, Object.fromEntries(
-  CHAR_LETTERS.map((c,i)=>[`character_${i}`, `models/characters/character-${c}.glb`])
-), {
+const MODELS_MANIFEST = Object.assign({}, WEAPON_MODEL_FILES, {
+  soldier: "models/characters/soldier.glb",
   prop_barrel: "models/props/barrel.glb",
   prop_box: "models/props/box.glb",
   prop_boxlarge: "models/props/box-large.glb",
@@ -48,49 +47,44 @@ function buildPlayerWeapon(){
 }
 function makeSoldier(name,index,isPlayer=false){
  const g=new THREE.Group();g.name=name;
- const palette=[0x40555e,0x55534b,0x344b53,0x4c4240,0x4b5860,0x4a514b,0x384752];
- const armorMat=mat(palette[index%palette.length],.62,.3),dark=mat(0x141d22,.78,.12),edge=mat(0x87999d,.45,.55),visor=new THREE.MeshStandardMaterial({color:0x8be6e4,emissive:0x287d80,emissiveIntensity:.85,metalness:.5,roughness:.22});
+ const tmpl = getModel("soldier");
+ const char = tmpl ? tmpl.clone(true) : null;
+ let mixer = null;
+ if (char) {
+   char.scale.setScalar(1);
+   char.position.set(0,0,0);
+   char.traverse(o=>{ if(o.isMesh){ o.castShadow=true; o.receiveShadow=true; }});
+   g.add(char);
+   char.traverse(o=>{ if(o.isMesh && o.material){ const m=o.material; if(m.color) m.color.setHex(0x3a4a30); if(m.roughness!==undefined) m.roughness=.85; }});
+   mixer = new THREE.AnimationMixer(char);
+   const clips = getAnimations("soldier");
+   const idleClip = clips.find(c=>/idle/i.test(c.name)) || clips[0];
+   const walkClip = clips.find(c=>/walk/i.test(c.name)) || clips[1];
+   const runClip = clips.find(c=>/run/i.test(c.name));
+   const actions = {};
+   if (idleClip) { actions.idle = mixer.clipAction(idleClip); actions.idle.play(); }
+   if (walkClip) { actions.walk = mixer.clipAction(walkClip); }
+   if (runClip) { actions.run = mixer.clipAction(runClip); }
+   // store on a temp; will assign to bot after bot creation (closure)
+   g.userData.mixer = mixer;
+   g.userData.actions = actions;
+   g.userData.clips = clips;
+ }
  const torso=new THREE.Group();torso.position.y=1.05;g.add(torso);
- makeBox(torso,0,0,0,.48,.57,.27,armorMat);
- makeBox(torso,0,.08,.145,.34,.22,.04,dark);
- makeBox(torso,-.14,-.1,.17,.09,.2,.045,edge);makeBox(torso,.14,-.1,.17,.09,.2,.045,edge);
- const head=new THREE.Group();head.position.set(0,.43,0);torso.add(head);
- const helmet=new THREE.Mesh(new THREE.SphereGeometry(.19,12,10),dark);helmet.scale.set(1,1.04,1.02);helmet.position.y=.05;helmet.castShadow=true;head.add(helmet);
- const face=new THREE.Mesh(new THREE.BoxGeometry(.22,.12,.18),armorMat);face.position.set(0,-.035,.04);head.add(face);
- const vis=new THREE.Mesh(new THREE.BoxGeometry(.22,.055,.035),visor);vis.position.set(0,.035,.13);head.add(vis);
- makeBox(torso,-.27,.16,0,.18,.24,.3,edge);makeBox(torso,.27,.16,0,.18,.24,.3,edge);
- const arms=[];
- for(const side of [-1,1]){
-   const pivot=new THREE.Group();pivot.position.set(side*.31,.18,.02);torso.add(pivot);
-   const upper=makeBox(pivot,0,-.15,0,.14,.32,.15,armorMat);upper.rotation.z=side*-.1;
-   const elbow=new THREE.Group();elbow.position.set(0,-.3,.02);pivot.add(elbow);makeBox(elbow,0,-.12,.02,.12,.25,.13,dark);
-   makeBox(elbow,0,-.24,.07,.13,.10,.16,edge);
-   arms.push({pivot,elbow,side});
- }
- const legs=[];
- for(const side of [-1,1]){
-   const hip=new THREE.Group();hip.position.set(side*.13,-.3,0);g.add(hip);
-   makeBox(hip,0,-.19,0,.18,.38,.21,armorMat);
-   const knee=new THREE.Group();knee.position.set(0,-.38,.015);hip.add(knee);makeBox(knee,0,-.15,.015,.15,.3,.18,dark);
-   makeBox(knee,0,-.31,.08,.18,.11,.3,edge);
-   legs.push({hip,knee,side});
- }
- // visibly equipped rifle with a muzzle reference used by enemy shots
- const gun=makeWeapon(index%5,false);gun.scale.multiplyScalar(.82);gun.position.set(.02,-.16,.24);gun.rotation.x=-.06;arms[1].elbow.add(gun);
- // Attach a real 3D character model for a visual upgrade (procedural rig kept for animation, meshes hidden)
- const charModel=getModel("character_"+(index%7));
- if(charModel){
-   torso.traverse(o=>{ if(o.isMesh) o.visible=false; });
-   charModel.scale.setScalar(0.65);
-   charModel.position.set(0,-1.05,0);
-   torso.add(charModel);
- }
- // bring support hand near fore-end with articulated arm position
- arms[0].pivot.rotation.x=-.55;arms[0].pivot.rotation.z=.2;
- arms[1].pivot.rotation.x=-.6;arms[1].pivot.rotation.z=-.12;
+ const arms=[];const legs=[];
  const hp= new THREE.Group();hp.position.y=2.1;g.add(hp);const bg=makeBox(hp,0,0,0,.7,.055,.06,mat(0x1b272d));const fg=makeBox(hp,0,0,.04,.66,.035,.02,new THREE.MeshBasicMaterial({color:0x74e0d9}));hp.visible=false;
- const bot={name,index,group:g,torso,head,arms,legs,gun,alive:true,hp:100,maxHp:100,kills:0,isPlayer,bar:hp,state:"patrol",speed:3.3,accuracy:.5,react:.6,damage:1,fireAt:0,thinkAt:0,reloadAt:0,mag:30,patrolTarget:new THREE.Vector3(),lastSeen:0,strafe:1,phase:Math.random()*6,hitFlash:0};
- g.userData.bot=bot;scene.add(g);return bot;
+ let gun = null;
+ if (char) {
+   let rh = null;
+   char.traverse(o=>{ if(!rh && o.name==="mixamorig:RightHand") rh=o; });
+   gun = makeWeapon(index%5,false);
+   gun.scale.multiplyScalar(.35);
+   if (rh) { rh.add(gun); gun.position.set(0,0,0); gun.rotation.set(0,Math.PI,0); }
+   else { g.add(gun); gun.position.set(.3,-.2,.4); }
+ }
+ const bot={name,index,group:g,torso,head:torso,arms,legs,gun,alive:true,hp:100,maxHp:100,kills:0,isPlayer,bar:hp,state:"patrol",speed:3.3,accuracy:.5,react:.6,damage:1,fireAt:0,thinkAt:0,reloadAt:0,mag:30,patrolTarget:new THREE.Vector3(),lastSeen:0,strafe:1,phase:Math.random()*6,hitFlash:0,mixer,char,actions:g.userData.actions||{}};
+ g.userData.bot=bot;scene.add(g);
+ return bot;
 }
 function spawnPowerups(){powerups=[];const types=['health','ammo','armor'];const positions=[[15,0,20],[-20,0,-15],[30,0,-30],[-35,0,25],[0,0,40],[10,0,-40]];for(const [x,z] of positions){const type=types[Math.floor(Math.random()*types.length)];const g=new THREE.Group();const color=type==='health'?0x4ade80:type==='ammo'?0xfbbf24:0x60a5fa;const mesh=new THREE.Mesh(new THREE.OctahedronGeometry(.5,0),new THREE.MeshStandardMaterial({color,emissive:color,emissiveIntensity:.6,transparent:true,opacity:.9}));mesh.position.y=1;g.add(mesh);g.position.set(x,0,z);scene.add(g);powerups.push({group:g,type,x,z,active:true,bob:Math.random()*6});}}
 function placeBots(){
@@ -190,10 +184,24 @@ function enemyUpdate(dt){
      else if(d.length()>.8){d.normalize();p.addScaledVector(d,e.speed*.35*dt);e.group.rotation.y=Math.atan2(d.x,d.z);}
    }
    const moving=Math.abs(p.x-e._lastX||0)+Math.abs(p.z-e._lastZ||0)>.001;e._lastX=p.x;e._lastZ=p.z;
-   const stride=Math.sin(now*8+e.index)*.45;
-   e.legs.forEach((l,i)=>{l.hip.rotation.x=stride*(i===0?1:-1);l.knee.rotation.x=Math.max(0,-stride)*.8;});
-   e.arms.forEach((a,i)=>{a.pivot.rotation.x=-.5+(e.state==="attack"?-.12:Math.sin(now*5+e.index)*.08);});
-   e.torso.position.y=1.05+Math.sin(now*3+e.index)*.012;
+   if (e.legs && e.legs.length) {
+     const stride=Math.sin(now*8+e.index)*.45;
+     e.legs.forEach((l,i)=>{l.hip.rotation.x=stride*(i===0?1:-1);l.knee.rotation.x=Math.max(0,-stride)*.8;});
+   }
+   if (e.arms && e.arms.length) {
+     e.arms.forEach((a,i)=>{a.pivot.rotation.x=-.5+(e.state==="attack"?-.12:Math.sin(now*5+e.index)*.08);});
+   }
+   if (e.torso) e.torso.position.y=1.05+Math.sin(now*3+e.index)*.012;
+   // Update realistic soldier animation mixer
+   if (e.mixer) {
+     e.mixer.update(dt);
+     const actions = e.actions || {};
+     if (moving) {
+       if (actions.walk && !actions.walk.isRunning()) { if (actions.idle) actions.idle.stop(); actions.walk.play(); }
+     } else {
+       if (actions.idle && !actions.idle.isRunning()) { if (actions.walk) actions.walk.stop(); actions.idle.play(); }
+     }
+   }
    e.bar.lookAt(camera.position);e.bar.visible=dist<25&&e.hp<e.maxHp;
  }
 }
